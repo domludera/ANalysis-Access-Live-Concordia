@@ -52,6 +52,7 @@ public class APISerlvet extends HttpServlet {
         // /capacity/buidlings
         // /capacity/buildings/<building>
         // /capacity/buildings/<building>/<room>
+        PrintWriter out = resp.getWriter();
 
         if(matches.size()>0){
 
@@ -63,16 +64,18 @@ public class APISerlvet extends HttpServlet {
             }
             try {
                 int respValue = (Integer) bson.get(matches.get(0));
-                resp.getOutputStream().print("{\n\""+matches.get(0)+"\" : "+respValue+"\n}");
+                out.println("{\n\""+matches.get(0)+"\" : "+respValue+"\n}");
             } catch (ClassCastException e){
                 double respValue = (double) bson.get(matches.get(0));
-                resp.getOutputStream().print("{\n\""+matches.get(0)+"\" : "+respValue+"\n}");
+                out.println("{\n\""+matches.get(0)+"\" : "+respValue+"\n}\r\t");
 
             }
 
         } else{
-            resp.getOutputStream().print(bson.toJson());
+            out.println(bson.toJson());
         }
+
+        out.close();
 
     }
 
