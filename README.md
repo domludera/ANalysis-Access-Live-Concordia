@@ -42,6 +42,7 @@ Method: PUT
 **ANalaysis Access Live** lets you unbook access to a specified building or to a specific room
 ```
 Method: PUT
+
 /unbook/buildings/{building}
 /unbook/buildings/{building}/{room}
 ```
