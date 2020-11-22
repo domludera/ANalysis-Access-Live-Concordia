@@ -16,7 +16,9 @@ import com.mongodb.client.result.*;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+import java.io.PrintWriter;
 import java.nio.file.Paths;
+import java.sql.ResultSet;
 import java.util.List;
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -90,17 +92,36 @@ public class APISerlvet extends HttpServlet {
 
 
         // /book/<building>/<room>/firstavailable
+
+
         // /book/<building>/<room>/<integer>
 
 
         // books first available spot
         if(matches.get(0).equals("book")) {
             // book room
-            collection.updateOne(eq(query, false), set(query, true));
+            UpdateResult us = collection.updateOne(eq(query, false), set(query, true));
+            PrintWriter out = resp.getWriter();
+            if(us.getModifiedCount()>0){
+                out.println("Succesfully Booked Room!");
+            }else{
+                out.println("Room already booked");
+            }
+            out.close();
+
+
+
 
         } else if (matches.get(0).equals("unbook")) {
             // unbook room
-            collection.updateOne(eq(query, true), set(query,false));
+            UpdateResult us = collection.updateOne(eq(query, true), set(query,false));
+            PrintWriter out = resp.getWriter();
+            if(us.getModifiedCount()>0){
+                out.println("Succesfully unbooked Room!");
+            }else{
+                out.println("Room is not booked");
+            }
+            out.close();
 
         }
 
