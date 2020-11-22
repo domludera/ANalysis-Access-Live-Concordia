@@ -72,6 +72,8 @@ public class APISerlvet extends HttpServlet {
         DBManager dbManager = new DBManager();
         MongoCollection collection = dbManager.database.getCollection(collectionName);
 
+        boolean update = false;
+
         // Regex Pattern to match URL Parameters
         String urlParamPattern = "(\\w+[-]?\\w+|\\d+)\\/*";
         Pattern r = Pattern.compile(urlParamPattern);
@@ -89,6 +91,7 @@ public class APISerlvet extends HttpServlet {
             }
 
         String query = String.format("buildings.%s.%s.timetable.%s.booked", matches.get(1), matches.get(2), matches.get(3));
+        PrintWriter out = resp.getWriter();
 
 
         // /book/<building>/<room>/firstavailable
@@ -101,13 +104,16 @@ public class APISerlvet extends HttpServlet {
         if(matches.get(0).equals("book")) {
             // book room
             UpdateResult us = collection.updateOne(eq(query, false), set(query, true));
-            PrintWriter out = resp.getWriter();
             if(us.getModifiedCount()>0){
+                String queryTotalVisitors = String.format("buildings.%s.total_visitors", matches.get(1));
+
+                collection.updateOne(eq("_id", new ObjectId("5fb9d85becc508467e25c1d4")),
+                        inc(queryTotalVisitors,1));
                 out.println("Succesfully Booked Room!");
+                update = true;
             }else{
                 out.println("Room already booked");
             }
-            out.close();
 
 
 
@@ -115,21 +121,36 @@ public class APISerlvet extends HttpServlet {
         } else if (matches.get(0).equals("unbook")) {
             // unbook room
             UpdateResult us = collection.updateOne(eq(query, true), set(query,false));
-            PrintWriter out = resp.getWriter();
             if(us.getModifiedCount()>0){
+                String queryInc = String.format("buildings.%s.total_visitors", matches.get(1));
+                collection.updateOne(eq("_id", new ObjectId("5fb9d85becc508467e25c1d4")), inc(queryInc,-1));
                 out.println("Succesfully unbooked Room!");
+                update = true;
             }else{
                 out.println("Room is not booked");
             }
-            out.close();
 
         }
 
+
+        if(update) {
+
+            Document bson = (Document) collection.find().first();
+            Document buildings = (Document) bson.get("buildings");
+            Document building = (Document) buildings.get(matches.get(1));
+            int capacity = building.getInteger("capacity");
+            int total_visitors = building.getInteger("total_visitors");
+            String queryBooking = String.format("buildings.%s.booking", matches.get(1));
+            double newBooking = (double) total_visitors/ (double) capacity;
+            collection.updateOne(eq("_id", new ObjectId("5fb9d85becc508467e25c1d4")), set(queryBooking, newBooking));
+            out.println("Booking at "+matches.get(1)+" is now at "+newBooking*100+"%");
+        }
 
         // /book/<building>/<room>/<integer>
         // books given spot (<integer>)
 
 
+        out.close();
     }
 
     // DELETE
