@@ -1,5 +1,8 @@
 {
   "buildings": {
+    "capacity": 100,
+    "total_visitors": 20,
+    "booking": 0.2,
     "library": {
       "capacity": 100,
       "total_visitors": 20,

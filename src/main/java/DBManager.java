@@ -1,8 +1,8 @@
 import com.mongodb.ConnectionString;
-import com.mongodb.DocumentToDBRefTransformer;
-import com.mongodb.client.*;
 import com.mongodb.MongoClientSettings;
-import org.bson.Document;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
 
 
 public class DBManager {
@@ -16,7 +16,7 @@ public class DBManager {
 
     MongoDatabase database;
 
-    DBManager(){
+    DBManager() {
         dbusername = cfg.getProperty("dbusername");
         dbhost = cfg.getProperty("dbhost");
         dbname = cfg.getProperty("dbname");
@@ -25,9 +25,9 @@ public class DBManager {
         getInstance();
     }
 
-    public void getInstance(){
+    public void getInstance() {
         ConnectionString connString = new ConnectionString(
-                "mongodb+srv://"+dbusername+":"+dbpwd+"@"+dbhost+".pufct.mongodb.net/"+dbcollection+"?retryWrites=true&w=majority"
+                "mongodb+srv://" + dbusername + ":" + dbpwd + "@" + dbhost + ".pufct.mongodb.net/" + dbcollection + "?retryWrites=true&w=majority"
         );
         MongoClientSettings settings = MongoClientSettings.builder()
                 .applyConnectionString(connString)

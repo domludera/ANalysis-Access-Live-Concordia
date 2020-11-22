@@ -1,60 +1,78 @@
-import com.mongodb.BasicDBObject;
 import com.mongodb.client.MongoCollection;
-import org.bson.Document;
-
-
-
-import com.mongodb.*;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
-
-import com.mongodb.client.model.UpdateOptions;
-import com.mongodb.client.result.*;
+import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.bson.types.ObjectId;
-
-import java.io.PrintWriter;
-import java.nio.file.Paths;
-import java.sql.ResultSet;
-import java.util.List;
-import java.util.Arrays;
-import java.util.ArrayList;
-
-import static com.mongodb.client.model.Filters.*;
-import static com.mongodb.client.model.Updates.*;
-
-
-
-
-
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Updates.inc;
+import static com.mongodb.client.model.Updates.set;
 
 
 public class APISerlvet extends HttpServlet {
 
 
     String collectionName = "buildings";
+    String id = "5fba4b55ecc508467e34225d";
+
+    String urlParamPattern = "(\\w+[-]?\\w+|\\d+)\\/*";
+    Pattern r = Pattern.compile(urlParamPattern);
 
 
     // READ
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         DBManager dbManager = new DBManager();
+        resp.setContentType("application/json");
 //        Document bson = dbManager.database.getCollection("buildings").find().first();
         Document bson = dbManager.database.getCollection(collectionName).find().first();
 
-        resp.setContentType("application/json");
-        resp.getOutputStream().print(bson.toJson());
+
+        // Regex Pattern to match URL Parameters
+
+        String requestUrl = req.getRequestURI();
+
+        Matcher m = r.matcher(requestUrl);
+        final List<String> matches = new ArrayList<>();
+
+        while (m.find()) {
+            matches.add(m.group(1));
+        }
+
+        // /capacity/buidlings
+        // /capacity/buildings/<building>
+        // /capacity/buildings/<building>/<room>
+
+        if(matches.size()>0){
+
+            if(matches.size() >= 2){
+                bson = (Document) bson.get(matches.get(1));
+            }
+            if (matches.size() >= 3){
+                bson = (Document) bson.get(matches.get(2));
+            }
+            try {
+                int respValue = (Integer) bson.get(matches.get(0));
+                resp.getOutputStream().print("{\n\""+matches.get(0)+"\" : "+respValue+"\n}");
+            } catch (ClassCastException e){
+                double respValue = (double) bson.get(matches.get(0));
+                resp.getOutputStream().print("{\n\""+matches.get(0)+"\" : "+respValue+"\n}");
+
+            }
+
+        } else{
+            resp.getOutputStream().print(bson.toJson());
+        }
 
     }
 
@@ -75,65 +93,53 @@ public class APISerlvet extends HttpServlet {
         boolean update = false;
 
         // Regex Pattern to match URL Parameters
-        String urlParamPattern = "(\\w+[-]?\\w+|\\d+)\\/*";
-        Pattern r = Pattern.compile(urlParamPattern);
+//        String urlParamPattern = "(\\w+[-]?\\w+|\\d+)\\/*";
+//        Pattern r = Pattern.compile(urlParamPattern);
 
         String requestUrl = req.getRequestURI();
-        String action;
-        String data;
 
+        Matcher m = r.matcher(requestUrl);
+        final List<String> matches = new ArrayList<>();
 
-            Matcher m = r.matcher(requestUrl);
-            final List<String> matches = new ArrayList<>();
-
-            while (m.find()) {
-                matches.add(m.group(1));
-            }
+        while (m.find()) {
+            matches.add(m.group(1));
+        }
 
         String query = String.format("buildings.%s.%s.timetable.%s.booked", matches.get(1), matches.get(2), matches.get(3));
         PrintWriter out = resp.getWriter();
 
-
-        // /book/<building>/<room>/firstavailable
-
-
-        // /book/<building>/<room>/<integer>
-
-
         // books first available spot
-        if(matches.get(0).equals("book")) {
+        if (matches.get(0).equals("book")) {
             // book room
             UpdateResult us = collection.updateOne(eq(query, false), set(query, true));
-            if(us.getModifiedCount()>0){
+            if (us.getModifiedCount() > 0) {
                 String queryTotalVisitors = String.format("buildings.%s.total_visitors", matches.get(1));
 
-                collection.updateOne(eq("_id", new ObjectId("5fb9d85becc508467e25c1d4")),
-                        inc(queryTotalVisitors,1));
+                collection.updateOne(eq("_id", new ObjectId("5fba4b55ecc508467e34225d")),
+                        inc(queryTotalVisitors, 1));
                 out.println("Succesfully Booked Room!");
                 update = true;
-            }else{
+            } else {
                 out.println("Room already booked");
             }
 
 
-
-
         } else if (matches.get(0).equals("unbook")) {
             // unbook room
-            UpdateResult us = collection.updateOne(eq(query, true), set(query,false));
-            if(us.getModifiedCount()>0){
+            UpdateResult us = collection.updateOne(eq(query, true), set(query, false));
+            if (us.getModifiedCount() > 0) {
                 String queryInc = String.format("buildings.%s.total_visitors", matches.get(1));
-                collection.updateOne(eq("_id", new ObjectId("5fb9d85becc508467e25c1d4")), inc(queryInc,-1));
+                collection.updateOne(eq("_id", new ObjectId(id)), inc(queryInc, -1));
                 out.println("Succesfully unbooked Room!");
                 update = true;
-            }else{
+            } else {
                 out.println("Room is not booked");
             }
 
         }
 
 
-        if(update) {
+        if (update) {
 
             Document bson = (Document) collection.find().first();
             Document buildings = (Document) bson.get("buildings");
@@ -141,9 +147,9 @@ public class APISerlvet extends HttpServlet {
             int capacity = building.getInteger("capacity");
             int total_visitors = building.getInteger("total_visitors");
             String queryBooking = String.format("buildings.%s.booking", matches.get(1));
-            double newBooking = (double) total_visitors/ (double) capacity;
-            collection.updateOne(eq("_id", new ObjectId("5fb9d85becc508467e25c1d4")), set(queryBooking, newBooking));
-            out.println("Booking at "+matches.get(1)+" is now at "+newBooking*100+"%");
+            double newBooking = (double) total_visitors / (double) capacity;
+            collection.updateOne(eq("_id", new ObjectId(id)), set(queryBooking, newBooking));
+            out.println("Booking at " + matches.get(1) + " is now at " + newBooking * 100 + "%");
         }
 
         // /book/<building>/<room>/<integer>
