@@ -3,7 +3,7 @@
 ## REST API
 
 
-**ANalaysis Access Live** gives you access to the capacity of the campus and the individual buildings 
+**ANalysis Access Live** gives you access to the capacity of the campus and the individual buildings 
 ```
 Method: GET
 
@@ -12,7 +12,7 @@ Method: GET
 ```
 
 
-**ANalaysis Access Live** gives you access to the realtime total visitors of the campus and the individual buildings 
+**ANalysis Access Live** gives you access to the realtime total visitors of the campus and the individual buildings 
 ```
 Method: GET
 
@@ -21,7 +21,7 @@ Method: GET
 ```
 
 
-**ANalaysis Access Live** gives you access to the realtime booking percentage of the campus and the individual buildings
+**ANalysis Access Live** gives you access to the realtime booking percentage of the campus and the individual buildings
 ```
 Method: GET
 
@@ -30,7 +30,7 @@ Method: GET
 ```
 
 
-**ANalaysis Access Live** lets you book access to a specified building or to a specific room
+**ANalysis Access Live** lets you book access to a specified building or to a specific room
 ```
 Method: PUT
 
@@ -39,7 +39,7 @@ Method: PUT
 ```
 
 
-**ANalaysis Access Live** lets you unbook access to a specified building or to a specific room
+**ANalysis Access Live** lets you unbook access to a specified building or to a specific room
 ```
 Method: PUT
 
