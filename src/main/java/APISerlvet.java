@@ -23,15 +23,16 @@ public class APISerlvet extends HttpServlet {
 
 
     String collectionName = "buildings";
-    String id = "5fba4b55ecc508467e34225d";
+    String collectionId = "5fba4b55ecc508467e34225d";
 
     String urlParamPattern = "(\\w+[-]?\\w+|\\d+)\\/*";
-    Pattern r = Pattern.compile(urlParamPattern);
+    Pattern compiledPattern = Pattern.compile(urlParamPattern);
 
 
     // READ
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
         DBManager dbManager = new DBManager();
         resp.setContentType("application/json");
 //        Document bson = dbManager.database.getCollection("buildings").find().first();
@@ -42,7 +43,7 @@ public class APISerlvet extends HttpServlet {
 
         String requestUrl = req.getRequestURI();
 
-        Matcher m = r.matcher(requestUrl);
+        Matcher m = compiledPattern.matcher(requestUrl);
         final List<String> matches = new ArrayList<>();
 
         while (m.find()) {
@@ -81,13 +82,15 @@ public class APISerlvet extends HttpServlet {
 
     // CREATE
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
         super.doPost(req, resp);
     }
 
     // UPDATE
     @Override
-    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doPut(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
 
         // Get DB Connection
         DBManager dbManager = new DBManager();
@@ -101,14 +104,14 @@ public class APISerlvet extends HttpServlet {
 
         String requestUrl = req.getRequestURI();
 
-        Matcher m = r.matcher(requestUrl);
+        Matcher m = compiledPattern.matcher(requestUrl);
         final List<String> matches = new ArrayList<>();
 
         while (m.find()) {
             matches.add(m.group(1));
         }
 
-        String query = String.format("buildings.%s.%s.timetable.%s.booked", matches.get(1), matches.get(2), matches.get(3));
+        String query = String.format("buildings.%s.%s.timetable.%s.booked", matches.get(2), matches.get(3), matches.get(4));
         PrintWriter out = resp.getWriter();
 
         // books first available spot
@@ -132,7 +135,7 @@ public class APISerlvet extends HttpServlet {
             UpdateResult us = collection.updateOne(eq(query, true), set(query, false));
             if (us.getModifiedCount() > 0) {
                 String queryInc = String.format("buildings.%s.total_visitors", matches.get(1));
-                collection.updateOne(eq("_id", new ObjectId(id)), inc(queryInc, -1));
+                collection.updateOne(eq("_id", new ObjectId(collectionId)), inc(queryInc, -1));
                 out.println("Succesfully unbooked Room!");
                 update = true;
             } else {
@@ -151,7 +154,7 @@ public class APISerlvet extends HttpServlet {
             int total_visitors = building.getInteger("total_visitors");
             String queryBooking = String.format("buildings.%s.booking", matches.get(1));
             double newBooking = (double) total_visitors / (double) capacity;
-            collection.updateOne(eq("_id", new ObjectId(id)), set(queryBooking, newBooking));
+            collection.updateOne(eq("_id", new ObjectId(collectionId)), set(queryBooking, newBooking));
             out.println("Booking at " + matches.get(1) + " is now at " + newBooking * 100 + "%");
         }
 
@@ -164,7 +167,8 @@ public class APISerlvet extends HttpServlet {
 
     // DELETE
     @Override
-    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
         super.doDelete(req, resp);
     }
 }
